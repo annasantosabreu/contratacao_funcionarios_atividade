@@ -311,6 +311,7 @@ function validarFormFuncionario(form) {
 // máscara (11) 91234-5678 aplicada enquanto a pessoa digita
 function mascararTelefone(valor) {
   const digitos = valor.replace(/\D/g, "").slice(0, 11);
+  if (digitos.length === 0) return "";
   if (digitos.length <= 2) return digitos.replace(/^(\d*)/, "($1");
   if (digitos.length <= 6) return digitos.replace(/^(\d{2})(\d*)/, "($1) $2");
   if (digitos.length <= 10) return digitos.replace(/^(\d{2})(\d{4})(\d*)/, "($1) $2-$3");
@@ -362,7 +363,7 @@ el.formCadastro?.addEventListener("submit", async (evento) => {
     const dados = extrairDadosForm(el.formCadastro);
     if (!dados.status) dados.status = "EM_ANALISE";
     await ApiFuncionarios.cadastrar(dados);
-    mostrarToast("Funcionário cadastrado com sucesso.", "success");
+    mostrarToast("Funcionário cadastrado com sucesso. (POST /funcionarios)", "success");
     resetarFormCadastro();
     irParaView("funcionarios");
   } catch (erro) {
@@ -432,17 +433,20 @@ el.formEditar?.addEventListener("submit", async (evento) => {
       return;
     }
 
+    let metodoUsado;
     if (alterados.length === CAMPOS_EDITAVEIS.length) {
       // todos os campos mudaram: substitui o registro inteiro
       await ApiFuncionarios.atualizarCompleto(original.id, dados);
+      metodoUsado = "PUT";
     } else {
       // só parte mudou: manda apenas o que foi alterado
       const parcial = {};
       alterados.forEach((campo) => (parcial[campo] = dados[campo]));
       await ApiFuncionarios.atualizarParcial(original.id, parcial);
+      metodoUsado = "PATCH";
     }
 
-    mostrarToast("Alterações salvas com sucesso.", "success");
+    mostrarToast(`Alterações salvas com sucesso. (${metodoUsado} /funcionarios/${original.id})`, "success");
     fecharModal(el.modalEditar);
     carregarListagem();
   } catch (erro) {
@@ -464,7 +468,7 @@ el.btnConfirmarExclusao?.addEventListener("click", async () => {
   definirCarregandoBotao(el.btnConfirmarExclusao, true, "Excluindo...");
   try {
     await ApiFuncionarios.excluir(estado.funcionarioParaExcluir.id);
-    mostrarToast("Funcionário excluído com sucesso.", "success");
+    mostrarToast(`Funcionário excluído com sucesso. (DELETE /funcionarios/${estado.funcionarioParaExcluir.id})`, "success");
     fecharModal(el.modalExcluir);
     carregarListagem();
   } catch (erro) {
