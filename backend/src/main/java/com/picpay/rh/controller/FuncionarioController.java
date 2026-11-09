@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/funcionarios")
-@CrossOrigin(origins = "*") // libera o front (roda em outra origem) pra acessar a API
+@CrossOrigin(origins = "*") 
 public class FuncionarioController {
 
     private final FuncionarioService service;
