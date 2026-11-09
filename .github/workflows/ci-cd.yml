@@ -1,0 +1,63 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  ci:
+    name: CI - Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do projeto
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Dar permissão ao Maven Wrapper
+        run: chmod +x backend/mvnw
+
+      - name: Instalar dependências e executar testes
+        working-directory: backend
+        run: ./mvnw test -B
+
+  deploy:
+    name: CD - Deploy to GitHub Pages
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout do projeto
+        uses: actions/checkout@v4
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparar artefato do frontend
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./frontend
+
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
